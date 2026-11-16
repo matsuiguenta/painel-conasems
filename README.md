@@ -335,6 +335,6 @@ painel-conasems/
 ---
 
 ## Créditos
-
+Desenvolvido com ❤️ por **Rogério Matsui Guenta**.
 Dados públicos dos Painéis CONASEMS / Ministério da Saúde. Layout e ícones inspirados na
 identidade visual dos painéis, para uso interno das Secretarias de Saúde.

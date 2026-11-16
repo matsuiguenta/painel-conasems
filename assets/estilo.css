@@ -812,9 +812,10 @@ body {
   color: var(--texto-fraco);
 }
 
-.rodape-esquerda { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.rodape-esquerda { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; min-width: 0; }
 .rodape-esquerda span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rodape-esquerda .icone { width: .95rem; height: .95rem; color: var(--azul); }
+.rodape-creditos { margin-left: auto; width: 100%; font-size: .62rem; color: var(--texto-fraco); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .pontos { display: flex; align-items: center; gap: .35rem; }
 .ponto {

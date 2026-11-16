@@ -29,6 +29,7 @@
   let restante = DURACAO_SLIDE;
   let ultimoGeradoEm = null;
   let usandoCache = false;
+  let assinaturaTelas = '';
 
   const reduzirMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -955,18 +956,20 @@
   /* --------------------------------------------------------------- montagem */
 
   function montarTelas() {
-    const definicoes = [
-      { id: 'capa', montar: telaCapa },
-      { id: 'cobertura', montar: telaCobertura },
-      { id: 'producao-aps', montar: telaProducaoAps },
-      { id: 'financiamento-aps', montar: telaFinanciamentoAps },
-      { id: 'visitas-acs', montar: telaVisitasAcs },
-      { id: 'credenciamento', montar: telaCredenciamento },
-      { id: 'mac-teto', montar: telaMacTeto },
-      { id: 'sia-sih', montar: telaSiaSih },
-      { id: 'onco-mental', montar: telaOncologiaMental },
-      { id: 'vigilancia', montar: telaVigilancia },
+    const todas = [
+      { id: 'capa', titulo: 'Capa — visão geral', montar: telaCapa },
+      { id: 'cobertura', titulo: 'Cobertura da APS', montar: telaCobertura },
+      { id: 'producao-aps', titulo: 'Produção da APS', montar: telaProducaoAps },
+      { id: 'financiamento-aps', titulo: 'Financiamento da APS', montar: telaFinanciamentoAps },
+      { id: 'visitas-acs', titulo: 'Visitas domiciliares dos ACS', montar: telaVisitasAcs },
+      { id: 'credenciamento', titulo: 'Credenciamento e cofinanciamento', montar: telaCredenciamento },
+      { id: 'mac-teto', titulo: 'Teto MAC e produção', montar: telaMacTeto },
+      { id: 'sia-sih', titulo: 'Produção ambulatorial e hospitalar', montar: telaSiaSih },
+      { id: 'onco-mental', titulo: 'Oncologia e saúde mental', montar: telaOncologiaMental },
+      { id: 'vigilancia', titulo: 'Vigilância em saúde', montar: telaVigilancia },
     ];
+    const definicoes = ordenarDefinicoes(todas);
+    assinaturaTelas = assinaturaSlides();
 
     if (!dados) {
       palco.innerHTML = `
@@ -993,7 +996,7 @@
 
     palco.innerHTML = slides.join('');
     pontosEl.innerHTML = definicoes
-      .map((def, i) => `<button class="ponto" data-ir="${i}" title="${esc(def.id)}" aria-label="Ir para a tela ${i + 1}"></button>`)
+      .map((def, i) => `<button class="ponto" data-ir="${i}" title="${esc(def.titulo || def.id)}" aria-label="Ir para ${esc(def.titulo || def.id)}"></button>`)
       .join('');
 
     [...palco.querySelectorAll('.slide')].forEach((slide, i) => {
@@ -1145,13 +1148,48 @@
 
     const municipio = dados?.municipio;
     if (municipio) {
+      atualizarTitulo(municipio);
       $('#municipio').textContent = `${municipio.nome} - ${municipio.uf}`;
       $('#municipio-sub').textContent = `${municipio.uf} · IBGE ${municipio.ibge}`;
-      document.title = `Painel APS, MAC e Vigilância · ${municipio.nome}/${municipio.uf}`;
     }
   }
 
   /* --------------------------------------------------------------- identidade */
+
+  function configPainel() {
+    return (dados && dados.config) || window.__PAINEL_CONFIG__ || {};
+  }
+
+  function assinaturaSlides() {
+    return JSON.stringify(configPainel().slides || []);
+  }
+
+  function ordenarDefinicoes(definicoes) {
+    const lista = configPainel().slides;
+    if (!Array.isArray(lista) || lista.length === 0) return definicoes;
+
+    const mapa = new Map(definicoes.map((def) => [def.id, def]));
+    const ordenadas = [];
+    lista.forEach((item) => {
+      const id = typeof item === 'string' ? item : item && item.id;
+      const ativo = typeof item === 'string' ? true : !item || item.ativo !== false;
+      const def = mapa.get(id);
+      if (!def) return;
+      mapa.delete(id);
+      if (ativo) ordenadas.push(def);
+    });
+    // Telas que ainda não estavam na configuração entram no fim, ativas.
+    definicoes.forEach((def) => { if (mapa.has(def.id)) ordenadas.push(def); });
+    return ordenadas.length ? ordenadas : definicoes;
+  }
+
+  function atualizarTitulo(municipio) {
+    if (!municipio || !municipio.nome) return;
+    const titulo = `PAINEL DE GESTÃO - ${municipio.nome} - ${municipio.uf}`;
+    const alvo = $('#marca-titulo');
+    if (alvo) alvo.textContent = titulo;
+    document.title = `${titulo} · APS, MAC e Vigilância`;
+  }
 
   function aplicarIdentidade(config) {
     const cfg = config || (dados && dados.config) || window.__PAINEL_CONFIG__;
@@ -1189,9 +1227,10 @@
         dados = novos;
         ultimoGeradoEm = novos.geradoEm;
         usandoCache = false;
+        const mudouTelas = assinaturaSlides() !== assinaturaTelas;
         aplicarIdentidade(novos.config);
         atualizarStatus();
-        if (mudou || slides.length === 0) {
+        if (mudou || slides.length === 0 || mudouTelas) {
           montarTelas();
           mostrar(Math.min(indice, Math.max(0, slides.length - 1)));
         }
@@ -1254,6 +1293,7 @@
     atualizarRelogio();
     ligarEventos();
     aplicarIdentidade();
+    atualizarTitulo(configPainel().municipio);
 
     // Primeiro pinta com o cache (garante imagem imediata na TV)…
     if (dados) {

@@ -35,6 +35,22 @@ BASE_CONASEMS = "https://paineis.conasems.org.br"
 
 MUNICIPIO_PADRAO = {"nome": "Bandeirantes", "uf": "PR", "ibge": "4102406"}
 LOGO_MAXIMO = 2_500_000  # 2,5 MB
+
+# Telas do painel, na ordem padrão. Os IDs são usados pelo app.js e pela
+# configuração salva (ordem e telas ativas).
+SLIDES = [
+    {"id": "capa", "titulo": "Capa — visão geral"},
+    {"id": "cobertura", "titulo": "Cobertura da APS"},
+    {"id": "producao-aps", "titulo": "Produção da APS"},
+    {"id": "financiamento-aps", "titulo": "Financiamento da APS"},
+    {"id": "visitas-acs", "titulo": "Visitas domiciliares dos ACS"},
+    {"id": "credenciamento", "titulo": "Credenciamento e cofinanciamento"},
+    {"id": "mac-teto", "titulo": "Teto MAC e produção"},
+    {"id": "sia-sih", "titulo": "Produção ambulatorial e hospitalar"},
+    {"id": "onco-mental", "titulo": "Oncologia e saúde mental"},
+    {"id": "vigilancia", "titulo": "Vigilância em saúde"},
+]
+
 EXTENSOES_LOGO = {
     "image/png": ".png",
     "image/jpeg": ".jpg",
@@ -99,6 +115,40 @@ def buscar_municipio(ibge: str) -> dict | None:
     return _indice().get(str(ibge or "").strip())
 
 
+def slides_padrao() -> list[dict]:
+    return [{"id": item["id"], "ativo": True} for item in SLIDES]
+
+
+def normalizar_slides(valor) -> list[dict]:
+    """Valida ordem/ativação das telas, completando IDs ausentes."""
+    validos = {item["id"] for item in SLIDES}
+    ordem: list[dict] = []
+    vistos: set[str] = set()
+
+    if isinstance(valor, list):
+        for item in valor:
+            if isinstance(item, str):
+                slide_id, ativo = item, True
+            elif isinstance(item, dict):
+                slide_id = str(item.get("id") or "").strip()
+                ativo = item.get("ativo", True) is not False
+            else:
+                continue
+            if slide_id in validos and slide_id not in vistos:
+                vistos.add(slide_id)
+                ordem.append({"id": slide_id, "ativo": ativo})
+
+    # Telas novas (ou configuração antiga sem slides) entram no fim, ativas.
+    for item in SLIDES:
+        if item["id"] not in vistos:
+            ordem.append({"id": item["id"], "ativo": True})
+
+    # O painel precisa de pelo menos uma tela ativa.
+    if not any(item["ativo"] for item in ordem):
+        ordem[0]["ativo"] = True
+    return ordem
+
+
 def _municipio_inicial() -> dict:
     ibge = os.environ.get("PAINEL_IBGE", "").strip()
     nome = os.environ.get("PAINEL_MUNICIPIO", "").strip()
@@ -118,6 +168,7 @@ def carregar() -> dict:
         "municipio": _municipio_inicial(),
         "logo": None,
         "logoAtualizadoEm": None,
+        "slides": slides_padrao(),
         "atualizadoEm": None,
     }
 
@@ -132,14 +183,14 @@ def carregar() -> dict:
                 oficial = buscar_municipio(municipio["ibge"])
                 cfg["municipio"] = oficial or municipio
             logo = salvo.get("logo")
+            cfg["logoAtualizadoEm"] = salvo.get("logoAtualizadoEm")
             if isinstance(logo, str) and logo.startswith("dados/logo."):
                 arquivo = PASTA_DADOS / Path(logo).name
                 if arquivo.is_file():
                     cfg["logo"] = logo
                 else:
-                    cfg["logo"] = None
                     cfg["logoAtualizadoEm"] = None
-            cfg["logoAtualizadoEm"] = salvo.get("logoAtualizadoEm")
+            cfg["slides"] = normalizar_slides(salvo.get("slides"))
             cfg["atualizadoEm"] = salvo.get("atualizadoEm")
     return cfg
 
@@ -157,6 +208,7 @@ def salvar(cfg: dict) -> dict:
         "municipio": municipio,
         "logo": logo,
         "logoAtualizadoEm": cfg.get("logoAtualizadoEm"),
+        "slides": normalizar_slides(cfg.get("slides")),
         "atualizadoEm": agora_iso(),
     }
     PASTA_DADOS.mkdir(parents=True, exist_ok=True)
@@ -174,6 +226,7 @@ def gravar_js(cfg: dict) -> None:
         "municipio": cfg.get("municipio") or dict(MUNICIPIO_PADRAO),
         "logo": cfg.get("logo"),
         "logoVersao": cfg.get("logoAtualizadoEm"),
+        "slides": normalizar_slides(cfg.get("slides")),
         "atualizadoEm": cfg.get("atualizadoEm"),
     }
     PASTA_DADOS.mkdir(parents=True, exist_ok=True)
@@ -192,6 +245,7 @@ def resumo(cfg: dict | None = None) -> dict:
         "municipio": cfg.get("municipio"),
         "logo": cfg.get("logo"),
         "logoVersao": cfg.get("logoAtualizadoEm"),
+        "slides": cfg.get("slides") or slides_padrao(),
         "atualizadoEm": cfg.get("atualizadoEm"),
     }
 

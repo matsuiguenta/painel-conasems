@@ -83,6 +83,15 @@ Ao trocar o município, os dados do município anterior são apagados do banco e
 uma nova coleta é disparada na hora (pode levar até um minuto). Depois de salvar, recarregue
 a TV (`F5`) para aplicar o novo logo e município.
 
+### Ordem e ativação das telas
+
+Na mesma página de configuração, na seção **Telas do painel**, você pode:
+
+- **Reordenar**: clique nas setas ↑ / ↓ ao lado de cada tela para mudar a ordem de exibição na TV.
+- **Ativar/desativar**: use o interruptor ao lado de cada tela para ocultá-la da rotação automática.
+- Pelo menos uma tela deve permanecer ativa. A ordem e a ativação são salvas em `dados/config.json`
+  e aplicadas ao recarregar o painel.
+
 A configuração fica em:
 
 | Arquivo | Conteúdo |
@@ -171,6 +180,7 @@ Observações para o Coolify:
 | `PAINEL_IBGE` | `4102406` | IBGE inicial, usado só quando ainda não existe `config.json`. |
 | `PAINEL_MUNICIPIO` | `Bandeirantes` | Nome inicial do município. |
 | `PAINEL_UF` | `PR` | UF inicial. |
+| `PAINEL_SENHA` | `saude123` | Senha para acessar `/config` e salvar alterações (município, logo e telas). |
 | `TZ` | `America/Sao_Paulo` na imagem | Fuso horário exibido no painel e nos horários da coleta. |
 
 > As variáveis `PAINEL_IBGE`, `PAINEL_MUNICIPIO` e `PAINEL_UF` definem apenas o ponto de
@@ -240,7 +250,10 @@ No Windows, basta copiar a pasta `dados/` com o servidor parado.
 | `GET` | `/api/status` | Situação do servidor, coleta, município e intervalo. Usado no healthcheck. |
 | `GET` | `/api/config` | Configuração atual e situação da última coleta. |
 | `GET` | `/api/municipios` | Lista `[IBGE, nome, UF]` dos municípios do IBGE. |
-| `POST` | `/api/config` | Salva município e/ou logo e, se o município mudar, coleta novamente. |
+| `GET` | `/api/sessao` | Informa se a sessão de configuração está autenticada. |
+| `POST` | `/api/login` | Valida a senha (`saude123` por padrão) e cria a sessão (cookie `painel_sessao`). |
+| `POST` | `/api/logout` | Encerra a sessão de configuração. |
+| `POST` | `/api/config` | Salva município, logo e ordem/ativação das telas (requer sessão ativa). |
 | `GET` | `/api/atualizar` | Força uma coleta agora. |
 
 Exemplo de `POST /api/config`:
@@ -249,7 +262,12 @@ Exemplo de `POST /api/config`:
 {
   "ibge": "4102406",
   "logoDataUrl": "data:image/png;base64,...",
-  "removerLogo": false
+  "removerLogo": false,
+  "slides": [
+    {"id": "capa", "ativo": true},
+    {"id": "cobertura", "ativo": true},
+    {"id": "producao-aps", "ativo": false}
+  ]
 }
 ```
 
@@ -308,11 +326,14 @@ painel-conasems/
 
 ## Segurança
 
+- A página `/config` e o `POST /api/config` são protegidos por senha.
+  - A senha padrão é **`saude123`** (alterável com a variável `PAINEL_SENHA`).
+  - Após o login, um cookie de sessão `painel_sessao` (HttpOnly, SameSite=Lax) dura 8 horas.
+  - Há um limite de 5 tentativas de login por 5 minutos por IP.
 - O servidor expõe apenas o painel, a configuração, `assets/`, `dados/cache.js`,
   `dados/config.js` e o logo configurado. Banco, código Python e logs não são servidos.
-- **A página `/config` e o `POST /api/config` não têm autenticação.** Use o painel em rede
-  interna ou coloque-o atrás de um proxy com autenticação (Coolify/Traefik, VPN etc.) antes
-  de expor na internet.
+- Use o painel em rede interna ou coloque-o atrás de um proxy com autenticação
+  (Coolify/Traefik, VPN etc.) antes de expor na internet.
 - No Windows, o servidor escuta apenas em `127.0.0.1` por padrão. No Docker, escuta em
   `0.0.0.0` para receber o tráfego do proxy/porta publicada.
 - O logo aceito é limitado a 2,5 MB e a tipos de imagem conhecidos (PNG, JPG, WEBP, SVG).
@@ -335,6 +356,8 @@ painel-conasems/
 ---
 
 ## Créditos
+
+Desenvolvido com ❤️ por **Rogério Matsui Guenta**
 
 Dados públicos dos Painéis CONASEMS / Ministério da Saúde. Layout e ícones inspirados na
 identidade visual dos painéis, para uso interno das Secretarias de Saúde.

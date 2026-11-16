@@ -9,6 +9,8 @@ services:
     environment:
       TZ: America/Sao_Paulo
       PAINEL_INTERVALO_MINUTOS: "20"
+      # Senha do painel de configuração. Se não definir, o padrão é "saude123".
+      # PAINEL_SENHA: "saude123"
       # Município inicial, usado somente quando ainda não existe config.json
       # no volume. Depois disso, vale o que estiver no painel /config.
       PAINEL_IBGE: "4102406"

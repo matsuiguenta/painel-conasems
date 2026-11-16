@@ -111,13 +111,13 @@
   .cartao-sub { font-size: .72rem; color: var(--texto-suave); margin-top: .1rem; }
   .campo { display: flex; flex-direction: column; gap: .35rem; }
   .campo label { font-size: .7rem; font-weight: 700; color: #475569; letter-spacing: .01em; }
-  .campo input[type="text"] {
+  .campo input[type="text"], .campo input[type="password"] {
     width: 100%; min-height: 2.9rem; padding: .65rem .8rem;
     border: 1px solid #d7e3f5; border-radius: .7rem; background: #fbfdff;
     font-family: inherit; font-size: .86rem; color: var(--texto); outline: none;
     transition: border-color .18s ease, box-shadow .18s ease;
   }
-  .campo input[type="text"]:focus { border-color: #8bb8f5; box-shadow: 0 0 0 4px rgba(5,89,191,.1); background: #fff; }
+  .campo input[type="text"]:focus, .campo input[type="password"]:focus { border-color: #8bb8f5; box-shadow: 0 0 0 4px rgba(5,89,191,.1); background: #fff; }
   .ajuda { font-size: .68rem; color: var(--texto-fraco); line-height: 1.45; }
   .selecionado {
     display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
@@ -177,7 +177,75 @@
   .enderecos { display: flex; flex-direction: column; gap: .35rem; margin-top: .8rem; font-size: .68rem; }
   .enderecos a { color: var(--azul); text-decoration: none; word-break: break-all; }
   .enderecos a:hover { text-decoration: underline; }
-  .rodape { margin-top: 1.4rem; text-align: center; font-size: .65rem; color: var(--texto-fraco); }
+  .rodape { margin-top: 1.4rem; text-align: center; font-size: .65rem; color: var(--texto-fraco); line-height: 1.7; }
+  .rodape strong { color: var(--marinho); }
+  .topo-acoes { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+  /* Telas do painel */
+  .lista-telas { display: flex; flex-direction: column; gap: .45rem; }
+  .tela-item {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: .6rem; align-items: center;
+    padding: .5rem .6rem; border: 1px solid var(--linha); border-radius: .7rem;
+    background: #fbfdff; transition: opacity .18s ease, background .18s ease;
+  }
+  .tela-item.desativada { opacity: .55; background: #f8fafc; }
+  .tela-pos {
+    width: 1.55rem; height: 1.55rem; border-radius: .45rem; flex: none;
+    background: var(--azul-fundo); color: var(--azul-escuro);
+    display: grid; place-items: center; font-size: .66rem; font-weight: 800;
+  }
+  .tela-nome { font-size: .76rem; font-weight: 700; color: var(--marinho); min-width: 0; }
+  .tela-controles { display: flex; align-items: center; gap: .3rem; }
+  .botao-mini {
+    width: 1.65rem; height: 1.65rem; border-radius: .45rem;
+    border: 1px solid var(--linha); background: #fff; color: #64748b;
+    display: grid; place-items: center; cursor: pointer; font-size: .8rem; line-height: 1;
+    transition: all .18s ease;
+  }
+  .botao-mini:hover:not(:disabled) { color: var(--azul); border-color: #c7dcff; background: #f5f9ff; }
+  .botao-mini:disabled { opacity: .3; cursor: default; }
+  .interruptor input {
+    appearance: none; -webkit-appearance: none;
+    width: 2.25rem; height: 1.25rem; border-radius: 999px;
+    background: #cbd5e1; position: relative; cursor: pointer; margin: 0;
+    transition: background .2s ease; vertical-align: middle;
+  }
+  .interruptor input::after {
+    content: ""; position: absolute; top: .16rem; left: .16rem;
+    width: .93rem; height: .93rem; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .2s ease;
+  }
+  .interruptor input:checked { background: var(--verde); }
+  .interruptor input:checked::after { transform: translateX(1rem); }
+
+  /* Acesso restrito */
+  .acesso-fundo {
+    position: fixed; inset: 0; z-index: 50;
+    display: grid; place-items: center; padding: 1.2rem;
+    background: rgba(15, 23, 42, .48); backdrop-filter: blur(5px);
+  }
+  .acesso-fundo[hidden] { display: none; }
+  .acesso-cartao {
+    width: min(25rem, 100%); background: #fff; border: 1px solid var(--linha);
+    border-radius: 1.1rem; padding: 1.65rem 1.6rem 1.5rem;
+    box-shadow: 0 30px 70px -30px rgba(15, 23, 42, .6);
+    text-align: center;
+  }
+  .acesso-icone {
+    width: 3.1rem; height: 3.1rem; margin: 0 auto .8rem; border-radius: .9rem;
+    background: var(--gradiente); color: #fff; display: grid; place-items: center;
+    box-shadow: 0 12px 24px -14px rgba(5,89,191,.9);
+  }
+  .acesso-icone svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .acesso-cartao h2 { font-family: var(--fonte-titulo); font-size: 1.25rem; color: var(--marinho); margin: 0 0 .3rem; letter-spacing: -.02em; }
+  .acesso-cartao p { margin: 0 0 1rem; font-size: .78rem; color: var(--texto-suave); line-height: 1.5; }
+  .acesso-cartao .campo { text-align: left; }
+  .acesso-cartao .botao { width: 100%; margin-top: .85rem; }
+  .acesso-cartao .mensagem { margin-top: .8rem; text-align: left; }
+  .acesso-voltar { display: inline-block; margin-top: .9rem; font-size: .7rem; color: var(--texto-suave); text-decoration: none; }
+  .acesso-voltar:hover { color: var(--azul); }
+  body.travado { overflow: hidden; }
   .girando { animation: girar 1s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
   @media (max-width: 880px) {
@@ -189,6 +257,27 @@
 </style>
 </head>
 <body>
+
+<div class="acesso-fundo" id="acesso" hidden>
+  <form class="acesso-cartao" id="form-acesso" autocomplete="off">
+    <div class="acesso-icone">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2>Acesso restrito</h2>
+    <p>Digite a senha para alterar o município, o logo e as telas do painel.</p>
+    <div class="campo">
+      <label for="senha">Senha de configuração</label>
+      <input type="password" id="senha" autocomplete="current-password" placeholder="Digite a senha" required>
+    </div>
+    <div class="mensagem" id="acesso-mensagem" role="alert" aria-live="assertive">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span id="acesso-texto"></span>
+    </div>
+    <button type="submit" class="botao primario" id="btn-entrar">Entrar</button>
+    <a class="acesso-voltar" href="./">Voltar ao painel</a>
+  </form>
+</div>
+
 <div class="pagina">
 
   <header class="topo">
@@ -197,14 +286,17 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.2 13.7 15.5 9.4"/></svg>
       </div>
       <div class="marca-texto">
-        <strong>Painéis CONASEMS</strong>
+        <strong id="marca-titulo">PAINEL DE GESTÃO - Bandeirantes - PR</strong>
         <span>APS, MAC e Vigilância em Saúde · configuração</span>
       </div>
     </div>
-    <a class="botao secundario" href="./">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
-      Abrir painel
-    </a>
+    <div class="topo-acoes">
+      <button type="button" class="botao secundario" id="btn-sair" hidden>Sair</button>
+      <a class="botao secundario" href="./">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+        Abrir painel
+      </a>
+    </div>
   </header>
 
   <div class="introducao">
@@ -282,6 +374,22 @@
           </div>
         </section>
 
+        <section class="cartao amarelo">
+          <div class="cartao-topo">
+            <div class="icone-caixa" style="background:#fef3c7;color:#b45309">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>
+            </div>
+            <div>
+              <div class="cartao-titulo">Telas do painel</div>
+              <div class="cartao-sub">Ordene e escolha quais telas aparecem na TV</div>
+            </div>
+          </div>
+
+          <div class="lista-telas" id="lista-telas"></div>
+          <span class="ajuda" style="display:block;margin-top:.6rem">Use as setas para mudar a ordem. Desative uma
+            tela para ocultá-la da rotação. Pelo menos uma tela deve permanecer ativa.</span>
+        </section>
+
       </div>
 
       <aside class="cartao roxo resumo">
@@ -299,6 +407,7 @@
         <div class="linha"><span class="rotulo">Última coleta</span><span class="valor" id="info-coleta">—</span></div>
         <div class="linha"><span class="rotulo">Situação dos dados</span><span class="valor" id="info-status">—</span></div>
         <div class="linha"><span class="rotulo">Logo</span><span class="valor" id="info-logo">—</span></div>
+        <div class="linha"><span class="rotulo">Telas ativas</span><span class="valor" id="info-telas">—</span></div>
         <div class="linha"><span class="rotulo">Intervalo de atualização</span><span class="valor" id="info-intervalo">20 min</span></div>
 
         <div class="nota">
@@ -329,7 +438,8 @@
   </form>
 
   <footer class="rodape">
-    Painel CONASEMS · configuração local · os dados são públicos e provenientes dos Painéis CONASEMS / Ministério da Saúde.
+    Painel CONASEMS · configuração local · os dados são públicos e provenientes dos Painéis CONASEMS / Ministério da Saúde.<br>
+    Desenvolvido com ❤️ por <strong>Rogério Matsui Guenta</strong>
   </footer>
 </div>
 
@@ -355,17 +465,32 @@
   const mensagemTexto = $('#mensagem-texto');
   const avisoColeta = $('#aviso-coleta');
   const marcaSimbolo = $('#marca-simbolo');
+  const listaTelas = $('#lista-telas');
+  const acesso = $('#acesso');
+  const formAcesso = $('#form-acesso');
+  const campoSenha = $('#senha');
+  const btnEntrar = $('#btn-entrar');
+  const btnSair = $('#btn-sair');
+  const acessoMensagem = $('#acesso-mensagem');
+  const acessoTexto = $('#acesso-texto');
 
   const estado = {
     municipios: [],
     config: null,
+    catalogo: [],
+    slides: [],
     logoData: null,
     removerLogo: false,
+    autenticado: false,
     salvando: false,
   };
 
   const rotulo = (m) => `${m[1]} — ${m[2]} · ${m[0]}`;
   const nf = new Intl.NumberFormat('pt-BR');
+  const esc = (texto) =>
+    String(texto == null ? '' : texto).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
 
   function mostrarMensagem(texto, tipo = 'info') {
     mensagem.className = `mensagem visivel ${tipo}`;
@@ -384,6 +509,54 @@
     } catch (erro) {
       return iso;
     }
+  }
+
+  function tituloTela(id) {
+    const item = estado.catalogo.find((t) => t.id === id);
+    return item ? item.titulo : id;
+  }
+
+  function renderizarTelas() {
+    const fragmento = document.createDocumentFragment();
+    estado.slides.forEach((item, i) => {
+      const linha = document.createElement('div');
+      linha.className = `tela-item${item.ativo ? '' : ' desativada'}`;
+      linha.innerHTML = `
+        <span class="tela-pos">${i + 1}</span>
+        <span class="tela-nome">${esc(tituloTela(item.id))}</span>
+        <span class="tela-controles">
+          <button type="button" class="botao-mini" data-acao="subir" data-indice="${i}"
+                  title="Mover para cima" aria-label="Mover ${esc(tituloTela(item.id))} para cima" ${i === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" class="botao-mini" data-acao="descer" data-indice="${i}"
+                  title="Mover para baixo" aria-label="Mover ${esc(tituloTela(item.id))} para baixo" ${i === estado.slides.length - 1 ? 'disabled' : ''}>↓</button>
+          <label class="interruptor" title="${item.ativo ? 'Desativar' : 'Ativar'} ${esc(tituloTela(item.id))}">
+            <input type="checkbox" data-acao="ativar" data-indice="${i}" ${item.ativo ? 'checked' : ''}
+                   aria-label="Exibir ${esc(tituloTela(item.id))}">
+          </label>
+        </span>`;
+      fragmento.appendChild(linha);
+    });
+    listaTelas.replaceChildren(fragmento);
+    const ativas = estado.slides.filter((item) => item.ativo).length;
+    $('#info-telas').textContent = `${ativas} de ${estado.slides.length}`;
+  }
+
+  function mostrarAcesso(mostrar = true) {
+    acesso.hidden = !mostrar;
+    document.body.classList.toggle('travado', mostrar);
+    if (mostrar) {
+      setTimeout(() => campoSenha.focus(), 60);
+    }
+  }
+
+  function mostrarAcessoMensagem(texto, tipo = 'erro') {
+    if (!texto) {
+      acessoMensagem.className = 'mensagem';
+      acessoTexto.textContent = '';
+      return;
+    }
+    acessoMensagem.className = `mensagem visivel ${tipo}`;
+    acessoTexto.textContent = texto;
   }
 
   function municipioDaEntrada() {
@@ -438,6 +611,9 @@
     const cfg = dados.config || {};
     estado.config = cfg;
     const municipio = cfg.municipio || {};
+    if (municipio.nome) {
+      $('#marca-titulo').textContent = `PAINEL DE GESTÃO - ${municipio.nome} - ${municipio.uf}`;
+    }
     if (municipio.ibge) {
       const linha = estado.municipios.find((m) => m[0] === String(municipio.ibge));
       campo.value = linha ? rotulo(linha) : `${municipio.nome} — ${municipio.uf} · ${municipio.ibge}`;
@@ -467,6 +643,24 @@
       mostrarLogo(null);
       btnRemover.disabled = true;
     }
+
+    estado.catalogo = Array.isArray(dados.slidesDisponiveis) ? dados.slidesDisponiveis : estado.catalogo;
+    const conhecidas = new Set(estado.catalogo.map((t) => t.id));
+    const vistas = new Set();
+    estado.slides = [];
+    (Array.isArray(cfg.slides) ? cfg.slides : []).forEach((item) => {
+      const id = typeof item === 'string' ? item : item && item.id;
+      if (!conhecidas.has(id) || vistas.has(id)) return;
+      vistas.add(id);
+      estado.slides.push({
+        id,
+        ativo: typeof item === 'string' ? true : !item || item.ativo !== false,
+      });
+    });
+    estado.catalogo.forEach((t) => {
+      if (!vistas.has(t.id)) estado.slides.push({ id: t.id, ativo: true });
+    });
+    renderizarTelas();
 
     if (dados.avisos && dados.avisos.length) {
       mostrarMensagem(`Coleta concluída com ${dados.avisos.length} aviso(s): ${dados.avisos[0]}`, 'aviso');
@@ -512,6 +706,65 @@
     }
   }
 
+  async function entrar(evento) {
+    evento.preventDefault();
+    const valor = campoSenha.value;
+    if (!valor) return;
+    btnEntrar.disabled = true;
+    mostrarAcessoMensagem('');
+    try {
+      const resposta = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senha: valor }),
+      });
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível entrar.');
+      campoSenha.value = '';
+      estado.autenticado = true;
+      btnSair.hidden = false;
+      mostrarAcesso(false);
+      await carregar();
+    } catch (erro) {
+      mostrarAcessoMensagem(erro.message || 'Senha incorreta.', 'erro');
+      campoSenha.select();
+    } finally {
+      btnEntrar.disabled = false;
+    }
+  }
+
+  async function sair() {
+    btnSair.disabled = true;
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (erro) {
+      // mesmo sem resposta, a interface volta para a tela de acesso
+    }
+    estado.autenticado = false;
+    btnSair.disabled = false;
+    btnSair.hidden = true;
+    mostrarAcessoMensagem('');
+    mostrarAcesso(true);
+  }
+
+  async function iniciarPagina() {
+    try {
+      const resposta = await fetch('/api/sessao', { cache: 'no-store' });
+      const dados = await resposta.json();
+      if (!dados.autenticado) {
+        mostrarAcesso(true);
+        return;
+      }
+    } catch (erro) {
+      mostrarAcesso(true);
+      mostrarAcessoMensagem('Não foi possível verificar a sessão.', 'erro');
+      return;
+    }
+    estado.autenticado = true;
+    btnSair.hidden = false;
+    await carregar();
+  }
+
   async function salvar(evento) {
     evento.preventDefault();
     if (estado.salvando) return;
@@ -537,9 +790,15 @@
           ibge: municipio[0],
           logoDataUrl: estado.logoData,
           removerLogo: estado.removerLogo,
+          slides: estado.slides,
         }),
       });
       const dados = await resposta.json();
+      if (resposta.status === 401) {
+        mostrarAcesso(true);
+        mostrarAcessoMensagem(dados.erro || 'Sessão expirada. Digite a senha novamente.', 'erro');
+        throw new Error(dados.erro || 'Senha necessária.');
+      }
       if (!resposta.ok) throw new Error(dados.erro || `Falha ao salvar (HTTP ${resposta.status}).`);
 
       estado.logoData = null;
@@ -554,7 +813,7 @@
       } else {
         mostrarMensagem('Configuração salva. A coleta será feita na próxima atualização.', 'aviso');
       }
-      avisoColeta.textContent = 'Recarregue a TV para aplicar o novo logo e município.';
+      avisoColeta.textContent = 'Recarregue a TV para aplicar o novo logo, município e ordem das telas.';
     } catch (erro) {
       mostrarMensagem(erro.message || 'Não foi possível salvar a configuração.', 'erro');
       avisoColeta.textContent = '';
@@ -572,6 +831,35 @@
   });
   campo.addEventListener('change', atualizarSelecionado);
 
+  listaTelas.addEventListener('click', (evento) => {
+    const botao = evento.target.closest('button[data-acao]');
+    if (!botao) return;
+    const indice = Number(botao.dataset.indice);
+    if (!Number.isInteger(indice) || indice < 0 || indice >= estado.slides.length) return;
+    if (botao.dataset.acao === 'subir' && indice > 0) {
+      [estado.slides[indice - 1], estado.slides[indice]] = [estado.slides[indice], estado.slides[indice - 1]];
+      renderizarTelas();
+    } else if (botao.dataset.acao === 'descer' && indice < estado.slides.length - 1) {
+      [estado.slides[indice + 1], estado.slides[indice]] = [estado.slides[indice], estado.slides[indice + 1]];
+      renderizarTelas();
+    }
+  });
+
+  listaTelas.addEventListener('change', (evento) => {
+    const entrada = evento.target.closest('input[data-acao="ativar"]');
+    if (!entrada) return;
+    const indice = Number(entrada.dataset.indice);
+    if (!Number.isInteger(indice) || indice < 0 || indice >= estado.slides.length) return;
+    const outroAtivo = estado.slides.some((item, i) => i !== indice && item.ativo);
+    if (!entrada.checked && !outroAtivo) {
+      entrada.checked = true;
+      mostrarMensagem('Mantenha pelo menos uma tela ativa.', 'aviso');
+      return;
+    }
+    estado.slides[indice].ativo = entrada.checked;
+    renderizarTelas();
+  });
+
   btnEscolher.addEventListener('click', () => arquivo.click());
   arquivo.addEventListener('change', () => {
     lerArquivo(arquivo.files && arquivo.files[0]);
@@ -586,8 +874,10 @@
   });
 
   form.addEventListener('submit', salvar);
+  formAcesso.addEventListener('submit', entrar);
+  btnSair.addEventListener('click', sair);
 
-  carregar();
+  iniciarPagina();
 })();
 </script>
 </body>

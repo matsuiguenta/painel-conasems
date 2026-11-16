@@ -11,9 +11,12 @@ Serve o dashboard, o painel de configuração e uma API simples:
     GET  /api/dados?refresh=1   -> tenta atualizar se os dados estiverem velhos
     GET  /api/dados?force=1     -> força uma nova coleta agora
     GET  /api/status            -> situação da última coleta
-    GET  /api/config            -> configuração atual
+    GET  /api/config            -> configuração atual (município, logo e telas)
     GET  /api/municipios        -> lista de municípios do IBGE
-    POST /api/config            -> salva município/logo e coleta os dados
+    GET  /api/sessao            -> informa se a sessão de configuração está ativa
+    POST /api/login             -> valida a senha e cria a sessão
+    POST /api/logout            -> encerra a sessão
+    POST /api/config            -> salva município/logo/telas (requer senha)
 
 O servidor atualiza os dados sozinho de tempos em tempos, para que a TV da
 secretaria permaneça sempre com informações recentes.
@@ -29,14 +32,17 @@ Uso em container (Linux/Coolify):
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
 import mimetypes
 import os
+import secrets
 import sys
 import threading
 import time
 import webbrowser
 from datetime import datetime
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -50,9 +56,17 @@ PORTA_PADRAO = int(os.environ.get("PORT", "8090"))
 INTERVALO_MINUTOS = int(os.environ.get("PAINEL_INTERVALO_MINUTOS", "20"))
 MINIMO_ENTRE_COLETAS = 180      # segundos entre coletas disparadas pela página
 LIMITE_CORPO = 6_000_000        # ~4,5 MB em base64 (logo de até 2,5 MB)
+SENHA_CONFIG = os.environ.get("PAINEL_SENHA", "saude123")
+SESSAO_SEGUNDOS = 8 * 3600
+COOKIE_SESSAO = "painel_sessao"
+MAX_TENTATIVAS = 5
+JANELA_TENTATIVAS = 300         # segundos
 
 TRAVA = threading.Lock()
 TRAVA_CONFIG = threading.Lock()
+TRAVA_SESSOES = threading.Lock()
+SESSOES: dict[str, float] = {}
+TENTATIVAS: dict[str, list] = {}
 ESTADO = {
     "ultima_tentativa": 0.0,
     "ultimo_sucesso": 0.0,
@@ -67,6 +81,72 @@ def agora_iso() -> str:
 
 def carregar() -> dict | None:
     return coletor.ler_ultimo_payload()
+
+
+def _ip_cliente(handler: BaseHTTPRequestHandler) -> str:
+    encaminhado = (handler.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    return encaminhado or handler.client_address[0]
+
+
+def _token_sessao(handler: BaseHTTPRequestHandler) -> str | None:
+    cookie = SimpleCookie()
+    try:
+        cookie.load(handler.headers.get("Cookie") or "")
+    except Exception:  # noqa: BLE001
+        return None
+    item = cookie.get(COOKIE_SESSAO)
+    return item.value if item else None
+
+
+def sessao_valida(handler: BaseHTTPRequestHandler) -> bool:
+    token = _token_sessao(handler)
+    if not token:
+        return False
+    with TRAVA_SESSOES:
+        expira = SESSOES.get(token)
+        if expira and expira > time.time():
+            return True
+        SESSOES.pop(token, None)
+    return False
+
+
+def pode_tentar(handler: BaseHTTPRequestHandler) -> bool:
+    ip = _ip_cliente(handler)
+    agora = time.time()
+    with TRAVA_SESSOES:
+        for chave in [c for c, valor in TENTATIVAS.items() if agora - valor[0] > JANELA_TENTATIVAS]:
+            TENTATIVAS.pop(chave, None)
+        inicio, tentativas = TENTATIVAS.get(ip, [agora, 0])
+        return tentativas < MAX_TENTATIVAS
+
+
+def registrar_falha(handler: BaseHTTPRequestHandler) -> None:
+    ip = _ip_cliente(handler)
+    agora = time.time()
+    with TRAVA_SESSOES:
+        inicio, tentativas = TENTATIVAS.get(ip, [agora, 0])
+        if agora - inicio > JANELA_TENTATIVAS:
+            inicio, tentativas = agora, 0
+        TENTATIVAS[ip] = [inicio, tentativas + 1]
+
+
+def limpar_tentativas(handler: BaseHTTPRequestHandler) -> None:
+    with TRAVA_SESSOES:
+        TENTATIVAS.pop(_ip_cliente(handler), None)
+
+
+def criar_sessao() -> str:
+    token = secrets.token_urlsafe(32)
+    with TRAVA_SESSOES:
+        SESSOES[token] = time.time() + SESSAO_SEGUNDOS
+    return token
+
+
+def encerrar_sessao(handler: BaseHTTPRequestHandler) -> None:
+    token = _token_sessao(handler)
+    if token:
+        with TRAVA_SESSOES:
+            SESSOES.pop(token, None)
 
 
 def atualizar(forcar: bool = False) -> dict | None:
@@ -117,13 +197,15 @@ class Manipulador(BaseHTTPRequestHandler):
         pass
 
     # ------------------------------------------------------------------
-    def _json(self, dados, codigo: int = 200) -> None:
+    def _json(self, dados, codigo: int = 200, cabecalhos: dict | None = None) -> None:
         corpo = json.dumps(dados, ensure_ascii=False).encode("utf-8")
         self.send_response(codigo)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        for chave, valor in (cabecalhos or {}).items():
+            self.send_header(chave, valor)
         self.end_headers()
         self.wfile.write(corpo)
 
@@ -189,6 +271,8 @@ class Manipulador(BaseHTTPRequestHandler):
             self._json(
                 {
                     "config": configuracao.resumo(cfg),
+                    "slidesDisponiveis": configuracao.SLIDES,
+                    "autenticado": sessao_valida(self),
                     "geradoEm": dados.get("geradoEm"),
                     "status": dados.get("status"),
                     "avisos": dados.get("avisos", []),
@@ -196,6 +280,10 @@ class Manipulador(BaseHTTPRequestHandler):
                     "ultimoErro": ESTADO["ultimo_erro"],
                 }
             )
+            return
+
+        if rota == "/api/sessao":
+            self._json({"autenticado": sessao_valida(self)})
             return
 
         if rota == "/api/municipios":
@@ -254,8 +342,55 @@ class Manipulador(BaseHTTPRequestHandler):
 
     # ------------------------------------------------------------------
     def do_POST(self):  # noqa: N802
-        if urlparse(self.path).path != "/api/config":
+        rota = urlparse(self.path).path
+
+        if rota == "/api/login":
+            if not pode_tentar(self):
+                self._json({"erro": "Muitas tentativas. Aguarde alguns minutos."}, 429)
+                return
+            try:
+                corpo = self._ler_json(limite=10_000)
+            except ValueError as erro:
+                self._json({"erro": str(erro)}, 400)
+                return
+            senha = str(corpo.get("senha") or "") if isinstance(corpo, dict) else ""
+            try:
+                senha_ok = hmac.compare_digest(senha, SENHA_CONFIG)
+            except TypeError:
+                senha_ok = False
+            if not senha_ok:
+                registrar_falha(self)
+                self._json({"erro": "Senha incorreta."}, 401)
+                return
+            limpar_tentativas(self)
+            token = criar_sessao()
+            self._json(
+                {"ok": True},
+                cabecalhos={
+                    "Set-Cookie": (
+                        f"{COOKIE_SESSAO}={token}; Path=/; HttpOnly; "
+                        f"SameSite=Lax; Max-Age={SESSAO_SEGUNDOS}"
+                    )
+                },
+            )
+            return
+
+        if rota == "/api/logout":
+            encerrar_sessao(self)
+            self._json(
+                {"ok": True},
+                cabecalhos={
+                    "Set-Cookie": f"{COOKIE_SESSAO}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+                },
+            )
+            return
+
+        if rota != "/api/config":
             self.send_error(404, "Rota não encontrada")
+            return
+
+        if not sessao_valida(self):
+            self._json({"erro": "Digite a senha para alterar as configurações.", "login": True}, 401)
             return
 
         try:
@@ -278,6 +413,9 @@ class Manipulador(BaseHTTPRequestHandler):
                     self._json({"erro": f"Município com IBGE {ibge} não encontrado."}, 400)
                     return
                 atual["municipio"] = municipio
+
+            if "slides" in corpo:
+                atual["slides"] = configuracao.normalizar_slides(corpo.get("slides"))
 
             try:
                 if corpo.get("logoDataUrl"):
@@ -360,7 +498,7 @@ def main() -> int:
     servidor = ThreadingHTTPServer((args.host, args.porta), Manipulador)
     endereco = f"http://localhost:{args.porta}/"
     print(f"Painel de {municipio['nome']}/{municipio['uf']} disponível em {endereco}")
-    print(f"Configuração: {endereco}config")
+    print(f"Configuração: {endereco}config (protegida por senha)")
     print(f"Atualização automática a cada {INTERVALO_MINUTOS} min. Ctrl+C para encerrar.")
 
     if not args.tv:

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuração · Painel CONASEMS</title>
+<meta name="robots" content="noindex">
+<style>
+  :root {
+    --azul: #0559bf;
+    --azul-escuro: #033f88;
+    --marinho: #1b2f59;
+    --azul-fundo: #eef4ff;
+    --verde: #10b981;
+    --verde-claro: #d1fae5;
+    --amarelo: #eab308;
+    --amarelo-claro: #fef3c7;
+    --vermelho: #ef4444;
+    --vermelho-claro: #fee2e2;
+    --texto: #0f172a;
+    --texto-suave: #64748b;
+    --texto-fraco: #94a3b8;
+    --linha: #e4ebf5;
+    --fundo: #f6f9fd;
+    --cartao: #ffffff;
+    --raio: 1rem;
+    --sombra: 0 14px 30px -22px rgba(15, 45, 90, .45), 0 2px 6px -2px rgba(15, 45, 90, .06);
+    --fonte: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    --fonte-titulo: "Outfit", "Inter", "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif;
+    --gradiente: linear-gradient(135deg, #0559bf 0%, #033f88 100%);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: var(--fonte);
+    color: var(--texto);
+    background:
+      radial-gradient(1200px 500px at 85% -10%, #dbeafe 0%, transparent 60%),
+      radial-gradient(900px 400px at 0% 100%, #e7f8f2 0%, transparent 55%),
+      var(--fundo);
+    -webkit-font-smoothing: antialiased;
+  }
+  .pagina { max-width: 1180px; margin: 0 auto; padding: 1.2rem 1.5rem 2rem; }
+  .topo {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: .9rem 1.2rem; margin-bottom: 1.4rem;
+    background: rgba(255,255,255,.85); backdrop-filter: blur(8px);
+    border: 1px solid var(--linha); border-radius: 1.1rem; box-shadow: var(--sombra);
+  }
+  .marca { display: flex; align-items: center; gap: .8rem; min-width: 0; }
+  .marca-simbolo {
+    width: 2.9rem; height: 2.9rem; border-radius: .9rem; flex: none;
+    background: var(--gradiente); color: #fff;
+    display: grid; place-items: center; overflow: hidden;
+    box-shadow: 0 10px 20px -12px rgba(5, 89, 191, .8);
+  }
+  .marca-simbolo svg { width: 1.7rem; height: 1.7rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .marca-simbolo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+  .marca-texto { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+  .marca-texto strong { font-family: var(--fonte-titulo); font-size: 1.05rem; color: var(--marinho); font-weight: 700; letter-spacing: -.01em; }
+  .marca-texto span { font-size: .7rem; color: var(--texto-suave); }
+  .botao {
+    display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+    min-height: 2.5rem; padding: .55rem 1.05rem; border-radius: .7rem;
+    border: 1px solid transparent; font-family: inherit; font-size: .78rem; font-weight: 700;
+    cursor: pointer; text-decoration: none; transition: all .18s ease;
+  }
+  .botao.primario { background: var(--gradiente); color: #fff; box-shadow: 0 12px 24px -16px rgba(5,89,191,.9); }
+  .botao.primario:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .botao.secundario { background: #fff; border-color: var(--linha); color: var(--marinho); }
+  .botao.secundario:hover { border-color: #c7dcff; color: var(--azul); background: #f8fbff; }
+  .botao.perigo { background: #fff; border-color: #fecaca; color: #b91c1c; }
+  .botao.perigo:hover { background: #fff5f5; }
+  .botao:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+  .botao svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .introducao { margin: 0 .2rem 1.2rem; }
+  .etiqueta {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .32rem .7rem; border-radius: 999px;
+    background: #fff; border: 1px solid #dbe7fb; color: var(--azul);
+    font-size: .64rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .introducao h1 {
+    font-family: var(--fonte-titulo); font-size: clamp(1.6rem, 2.6vw, 2.35rem);
+    letter-spacing: -.03em; color: var(--marinho); margin: .5rem 0 .25rem; line-height: 1.05;
+  }
+  .introducao p { margin: 0; max-width: 70ch; color: var(--texto-suave); font-size: .84rem; line-height: 1.55; }
+  .grade { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 1rem; align-items: start; }
+  .coluna { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+  .cartao {
+    position: relative; background: var(--cartao); border: 1px solid var(--linha);
+    border-radius: var(--raio); box-shadow: var(--sombra); padding: 1.15rem 1.25rem 1.25rem;
+    overflow: hidden;
+  }
+  .cartao::after {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+    background: var(--destaque, var(--gradiente));
+  }
+  .cartao.verde { --destaque: linear-gradient(90deg, #059669, #34d399); }
+  .cartao.roxo { --destaque: linear-gradient(90deg, #5b21b6, #a78bfa); }
+  .cartao.amarelo { --destaque: linear-gradient(90deg, #d97706, #fbbf24); }
+  .cartao-topo { display: flex; align-items: center; gap: .6rem; margin-bottom: .9rem; }
+  .icone-caixa {
+    width: 2.15rem; height: 2.15rem; border-radius: .7rem; flex: none;
+    display: grid; place-items: center; background: var(--azul-fundo); color: var(--azul);
+  }
+  .icone-caixa svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .icone-caixa.verde { background: #e7f8f2; color: #059669; }
+  .icone-caixa.roxo { background: #f2ecff; color: #6d28d9; }
+  .cartao-titulo { font-family: var(--fonte-titulo); font-size: .98rem; font-weight: 700; color: var(--marinho); }
+  .cartao-sub { font-size: .72rem; color: var(--texto-suave); margin-top: .1rem; }
+  .campo { display: flex; flex-direction: column; gap: .35rem; }
+  .campo label { font-size: .7rem; font-weight: 700; color: #475569; letter-spacing: .01em; }
+  .campo input[type="text"] {
+    width: 100%; min-height: 2.9rem; padding: .65rem .8rem;
+    border: 1px solid #d7e3f5; border-radius: .7rem; background: #fbfdff;
+    font-family: inherit; font-size: .86rem; color: var(--texto); outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+  .campo input[type="text"]:focus { border-color: #8bb8f5; box-shadow: 0 0 0 4px rgba(5,89,191,.1); background: #fff; }
+  .ajuda { font-size: .68rem; color: var(--texto-fraco); line-height: 1.45; }
+  .selecionado {
+    display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+    margin-top: .8rem; padding: .7rem .85rem;
+    border: 1px solid #e3ecfb; border-radius: .75rem;
+    background: linear-gradient(120deg, #f4f8ff, #ffffff);
+  }
+  .selecionado .nome { font-weight: 800; color: var(--marinho); font-size: .88rem; }
+  .pilula {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .22rem .55rem; border-radius: 999px;
+    font-size: .64rem; font-weight: 700; background: var(--azul-fundo);
+    color: var(--azul-escuro); border: 1px solid #dbe7fb;
+  }
+  .logo-area { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .logo-preview {
+    width: 8.2rem; height: 8.2rem; flex: none; border-radius: .9rem;
+    border: 1px dashed #cbd9ee; background:
+      linear-gradient(45deg, #f8fafc 25%, transparent 25%, transparent 75%, #f8fafc 75%) 0 0 / 18px 18px,
+      linear-gradient(45deg, #f8fafc 25%, transparent 25%, transparent 75%, #f8fafc 75%) 9px 9px / 18px 18px,
+      #fff;
+    display: grid; place-items: center; overflow: hidden; position: relative;
+  }
+  .logo-preview img { width: 100%; height: 100%; object-fit: contain; padding: .35rem; background: #fff; }
+  .logo-vazio { display: flex; flex-direction: column; align-items: center; gap: .35rem; color: var(--texto-fraco); text-align: center; padding: .5rem; }
+  .logo-vazio svg { width: 1.8rem; height: 1.8rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .logo-vazio span { font-size: .62rem; line-height: 1.3; }
+  .logo-controles { display: flex; flex-direction: column; gap: .5rem; flex: 1; min-width: 12rem; }
+  .linha-botoes { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .acoes { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; margin-top: 1.1rem; }
+  .acoes .espaco { flex: 1; }
+  .mensagem {
+    display: none; align-items: flex-start; gap: .55rem; margin-top: 1rem;
+    padding: .75rem .9rem; border-radius: .75rem; font-size: .76rem; line-height: 1.5;
+    border: 1px solid transparent;
+  }
+  .mensagem.visivel { display: flex; }
+  .mensagem svg { width: 1rem; height: 1rem; flex: none; margin-top: .1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mensagem.info { background: var(--azul-fundo); border-color: #dbe7fb; color: var(--azul-escuro); }
+  .mensagem.sucesso { background: var(--verde-claro); border-color: #a7f3d0; color: #047857; }
+  .mensagem.aviso { background: var(--amarelo-claro); border-color: #fde68a; color: #b45309; }
+  .mensagem.erro { background: var(--vermelho-claro); border-color: #fecaca; color: #b91c1c; }
+  .resumo { position: sticky; top: 1rem; }
+  .resumo .linha { display: flex; align-items: baseline; justify-content: space-between; gap: .8rem; padding: .55rem 0; border-bottom: 1px dashed #edf1f8; font-size: .75rem; }
+  .resumo .linha:last-of-type { border-bottom: none; }
+  .resumo .rotulo { color: var(--texto-suave); }
+  .resumo .valor { font-weight: 700; color: var(--marinho); text-align: right; }
+  .status-dado {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .2rem .55rem; border-radius: 999px; font-size: .62rem; font-weight: 800;
+    background: var(--verde-claro); color: #047857; border: 1px solid #a7f3d0;
+  }
+  .status-dado.parcial { background: var(--amarelo-claro); color: #b45309; border-color: #fde68a; }
+  .status-dado.erro { background: var(--vermelho-claro); color: #b91c1c; border-color: #fecaca; }
+  .nota { margin-top: .9rem; padding: .7rem .8rem; border-radius: .7rem; background: #f8fafc; border: 1px solid var(--linha); font-size: .68rem; color: var(--texto-suave); line-height: 1.5; }
+  .nota b { color: var(--marinho); }
+  .enderecos { display: flex; flex-direction: column; gap: .35rem; margin-top: .8rem; font-size: .68rem; }
+  .enderecos a { color: var(--azul); text-decoration: none; word-break: break-all; }
+  .enderecos a:hover { text-decoration: underline; }
+  .rodape { margin-top: 1.4rem; text-align: center; font-size: .65rem; color: var(--texto-fraco); }
+  .girando { animation: girar 1s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  @media (max-width: 880px) {
+    .grade { grid-template-columns: 1fr; }
+    .resumo { position: static; }
+    .pagina { padding: 1rem; }
+    .topo { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+  <header class="topo">
+    <div class="marca">
+      <div class="marca-simbolo" id="marca-simbolo">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.2 13.7 15.5 9.4"/></svg>
+      </div>
+      <div class="marca-texto">
+        <strong>Painéis CONASEMS</strong>
+        <span>APS, MAC e Vigilância em Saúde · configuração</span>
+      </div>
+    </div>
+    <a class="botao secundario" href="./">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+      Abrir painel
+    </a>
+  </header>
+
+  <div class="introducao">
+    <span class="etiqueta">Configuração</span>
+    <h1>Município e identidade visual</h1>
+    <p>Escolha o município monitorado e envie o logo da Secretaria de Saúde. Ao trocar o município, os dados
+      anteriores são apagados e uma nova coleta é feita nos Painéis CONASEMS — isso pode levar até um minuto.</p>
+  </div>
+
+  <form id="formulario" autocomplete="off">
+    <div class="grade">
+      <div class="coluna">
+
+        <section class="cartao">
+          <div class="cartao-topo">
+            <div class="icone-caixa">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+              <div class="cartao-titulo">Município monitorado</div>
+              <div class="cartao-sub">Fonte dos dados: Painéis CONASEMS (SIAPS, SISMAC e Vigilância)</div>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="municipio">Buscar município</label>
+            <input type="text" id="municipio" name="municipio" list="lista-municipios"
+                   placeholder="Digite o nome ou o código IBGE…" spellcheck="false">
+            <datalist id="lista-municipios"></datalist>
+            <span class="ajuda">Base do IBGE com todos os municípios do Brasil. Selecione uma sugestão para
+              confirmar o estado e o código.</span>
+          </div>
+
+          <div class="selecionado" id="selecionado">
+            <span class="nome" id="sel-nome">—</span>
+            <span class="pilula" id="sel-uf">UF —</span>
+            <span class="pilula" id="sel-ibge">IBGE —</span>
+          </div>
+        </section>
+
+        <section class="cartao verde">
+          <div class="cartao-topo">
+            <div class="icone-caixa verde">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div>
+              <div class="cartao-titulo">Logo da Secretaria de Saúde</div>
+              <div class="cartao-sub">Aparece no cabeçalho do painel e nesta página</div>
+            </div>
+          </div>
+
+          <div class="logo-area">
+            <div class="logo-preview" id="logo-preview">
+              <div class="logo-vazio" id="logo-vazio">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Nenhum logo<br>enviado</span>
+              </div>
+              <img id="logo-img" alt="Pré-visualização do logo" hidden>
+            </div>
+
+            <div class="logo-controles">
+              <input type="file" id="arquivo-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+              <div class="linha-botoes">
+                <button type="button" class="botao secundario" id="btn-escolher">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Escolher imagem
+                </button>
+                <button type="button" class="botao perigo" id="btn-remover" disabled>
+                  Remover logo
+                </button>
+              </div>
+              <span class="ajuda">PNG, JPG, WEBP ou SVG, até 2,5 MB. Prefira uma imagem quadrada ou com fundo
+                transparente para ficar nítida na TV.</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <aside class="cartao roxo resumo">
+        <div class="cartao-topo">
+          <div class="icone-caixa roxo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div class="cartao-titulo">Situação atual</div>
+            <div class="cartao-sub">Última coleta e arquivos locais</div>
+          </div>
+        </div>
+
+        <div class="linha"><span class="rotulo">Município</span><span class="valor" id="info-municipio">—</span></div>
+        <div class="linha"><span class="rotulo">Última coleta</span><span class="valor" id="info-coleta">—</span></div>
+        <div class="linha"><span class="rotulo">Situação dos dados</span><span class="valor" id="info-status">—</span></div>
+        <div class="linha"><span class="rotulo">Logo</span><span class="valor" id="info-logo">—</span></div>
+        <div class="linha"><span class="rotulo">Intervalo de atualização</span><span class="valor" id="info-intervalo">20 min</span></div>
+
+        <div class="nota">
+          <b>Como funciona:</b> o servidor consulta os endpoints públicos do CONASEMS e guarda a última coleta no
+          banco SQLite. Sem internet, o painel continua exibindo os dados armazenados.
+        </div>
+        <div class="enderecos">
+          <a href="./" target="_blank" rel="noopener">Abrir o painel na TV →</a>
+          <a href="/api/status" target="_blank" rel="noopener">Ver status técnico (/api/status) →</a>
+        </div>
+      </aside>
+    </div>
+
+    <div class="acoes">
+      <button type="submit" class="botao primario" id="btn-salvar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Salvar e atualizar dados
+      </button>
+      <a class="botao secundario" href="./">Cancelar</a>
+      <span class="espaco"></span>
+      <span class="ajuda" id="aviso-coleta"></span>
+    </div>
+
+    <div class="mensagem" id="mensagem" role="status" aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span id="mensagem-texto"></span>
+    </div>
+  </form>
+
+  <footer class="rodape">
+    Painel CONASEMS · configuração local · os dados são públicos e provenientes dos Painéis CONASEMS / Ministério da Saúde.
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (sel) => document.querySelector(sel);
+  const form = $('#formulario');
+  const campo = $('#municipio');
+  const lista = $('#lista-municipios');
+  const selNome = $('#sel-nome');
+  const selUf = $('#sel-uf');
+  const selIbge = $('#sel-ibge');
+  const preview = $('#logo-preview');
+  const logoImg = $('#logo-img');
+  const logoVazio = $('#logo-vazio');
+  const arquivo = $('#arquivo-logo');
+  const btnEscolher = $('#btn-escolher');
+  const btnRemover = $('#btn-remover');
+  const btnSalvar = $('#btn-salvar');
+  const mensagem = $('#mensagem');
+  const mensagemTexto = $('#mensagem-texto');
+  const avisoColeta = $('#aviso-coleta');
+  const marcaSimbolo = $('#marca-simbolo');
+
+  const estado = {
+    municipios: [],
+    config: null,
+    logoData: null,
+    removerLogo: false,
+    salvando: false,
+  };
+
+  const rotulo = (m) => `${m[1]} — ${m[2]} · ${m[0]}`;
+  const nf = new Intl.NumberFormat('pt-BR');
+
+  function mostrarMensagem(texto, tipo = 'info') {
+    mensagem.className = `mensagem visivel ${tipo}`;
+    mensagemTexto.textContent = texto;
+  }
+
+  function esconderMensagem() {
+    mensagem.className = 'mensagem';
+    mensagemTexto.textContent = '';
+  }
+
+  function formatarData(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    } catch (erro) {
+      return iso;
+    }
+  }
+
+  function municipioDaEntrada() {
+    const texto = campo.value.trim();
+    if (!texto) return null;
+    const exato = estado.municipios.find((m) => rotulo(m) === texto);
+    if (exato) return exato;
+    const codigos = texto.match(/\b\d{6,7}\b/g);
+    if (codigos && codigos.length) {
+      const codigo = codigos[codigos.length - 1];
+      return estado.municipios.find((m) => m[0] === codigo) || null;
+    }
+    const nome = texto.toLowerCase();
+    const porNome = estado.municipios.filter((m) => m[1].toLowerCase() === nome);
+    return porNome.length === 1 ? porNome[0] : null;
+  }
+
+  function atualizarSelecionado() {
+    const m = municipioDaEntrada();
+    selNome.textContent = m ? m[1] : '—';
+    selUf.textContent = m ? `UF ${m[2]}` : 'UF —';
+    selIbge.textContent = m ? `IBGE ${m[0]}` : 'IBGE —';
+    if (!m && campo.value.trim()) {
+      selNome.textContent = 'Selecione uma sugestão da lista';
+    }
+  }
+
+  function montarLista() {
+    const fragmento = document.createDocumentFragment();
+    estado.municipios.forEach((m) => {
+      const opcao = document.createElement('option');
+      opcao.value = rotulo(m);
+      fragmento.appendChild(opcao);
+    });
+    lista.replaceChildren(fragmento);
+  }
+
+  function mostrarLogo(src) {
+    if (!src) {
+      logoImg.hidden = true;
+      logoImg.removeAttribute('src');
+      logoVazio.hidden = false;
+      marcaSimbolo.querySelector('img')?.remove();
+      return;
+    }
+    logoImg.src = src;
+    logoImg.hidden = false;
+    logoVazio.hidden = true;
+  }
+
+  function preencher(dados) {
+    const cfg = dados.config || {};
+    estado.config = cfg;
+    const municipio = cfg.municipio || {};
+    if (municipio.ibge) {
+      const linha = estado.municipios.find((m) => m[0] === String(municipio.ibge));
+      campo.value = linha ? rotulo(linha) : `${municipio.nome} — ${municipio.uf} · ${municipio.ibge}`;
+    }
+    atualizarSelecionado();
+
+    $('#info-municipio').textContent = municipio.nome ? `${municipio.nome}/${municipio.uf}` : '—';
+    $('#info-coleta').textContent = dados.geradoEm ? formatarData(dados.geradoEm) : 'sem dados';
+    $('#info-logo').textContent = cfg.logo ? 'enviado' : 'padrão do painel';
+
+    const status = $('#info-status');
+    if (!dados.geradoEm) {
+      status.innerHTML = '<span class="status-dado erro">sem dados</span>';
+    } else if (dados.status === 'parcial' || (dados.avisos && dados.avisos.length)) {
+      status.innerHTML = '<span class="status-dado parcial">parcial</span>';
+    } else {
+      status.innerHTML = '<span class="status-dado">ok</span>';
+    }
+
+    const versao = cfg.logoVersao ? `?v=${encodeURIComponent(cfg.logoVersao)}` : '';
+    if (cfg.logo) {
+      const src = `${cfg.logo}${versao}`;
+      mostrarLogo(src);
+      marcaSimbolo.innerHTML = `<img src="${src}" alt="Logo da Secretaria de Saúde">`;
+      btnRemover.disabled = false;
+    } else {
+      mostrarLogo(null);
+      btnRemover.disabled = true;
+    }
+
+    if (dados.avisos && dados.avisos.length) {
+      mostrarMensagem(`Coleta concluída com ${dados.avisos.length} aviso(s): ${dados.avisos[0]}`, 'aviso');
+    }
+  }
+
+  function lerArquivo(arquivoSelecionado) {
+    if (!arquivoSelecionado) return;
+    const tipos = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+    if (!tipos.includes(arquivoSelecionado.type)) {
+      mostrarMensagem('Formato não suportado. Envie PNG, JPG, WEBP ou SVG.', 'erro');
+      return;
+    }
+    if (arquivoSelecionado.size > 2_500_000) {
+      mostrarMensagem('A imagem tem mais de 2,5 MB. Reduza o arquivo e tente novamente.', 'erro');
+      return;
+    }
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      estado.logoData = leitor.result;
+      estado.removerLogo = false;
+      mostrarLogo(leitor.result);
+      btnRemover.disabled = false;
+      mostrarMensagem('Logo carregado. Clique em “Salvar e atualizar dados” para aplicar.', 'info');
+    };
+    leitor.onerror = () => mostrarMensagem('Não foi possível ler a imagem.', 'erro');
+    leitor.readAsDataURL(arquivoSelecionado);
+  }
+
+  async function carregar() {
+    try {
+      const [respostaConfig, respostaMunicipios] = await Promise.all([
+        fetch('/api/config', { cache: 'no-store' }),
+        fetch('/api/municipios', { cache: 'no-store' }),
+      ]);
+      if (!respostaConfig.ok) throw new Error(`HTTP ${respostaConfig.status}`);
+      const dados = await respostaConfig.json();
+      estado.municipios = await respostaMunicipios.json();
+      montarLista();
+      preencher(dados);
+    } catch (erro) {
+      mostrarMensagem(`Não foi possível carregar a configuração: ${erro.message}`, 'erro');
+    }
+  }
+
+  async function salvar(evento) {
+    evento.preventDefault();
+    if (estado.salvando) return;
+    const municipio = municipioDaEntrada();
+    if (!municipio) {
+      mostrarMensagem('Selecione um município válido na lista de sugestões.', 'erro');
+      campo.focus();
+      return;
+    }
+
+    estado.salvando = true;
+    btnSalvar.disabled = true;
+    btnSalvar.querySelector('svg')?.classList.add('girando');
+    esconderMensagem();
+    avisoColeta.textContent = 'Salvando e coletando os dados… isso pode levar até um minuto.';
+    mostrarMensagem(`Salvando ${municipio[1]}/${municipio[2]} e consultando os Painéis CONASEMS…`, 'info');
+
+    try {
+      const resposta = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ibge: municipio[0],
+          logoDataUrl: estado.logoData,
+          removerLogo: estado.removerLogo,
+        }),
+      });
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.erro || `Falha ao salvar (HTTP ${resposta.status}).`);
+
+      estado.logoData = null;
+      estado.removerLogo = false;
+      await carregar();
+
+      if (dados.ok) {
+        const quando = dados.geradoEm ? formatarData(dados.geradoEm) : 'agora';
+        mostrarMensagem(`Configuração salva. Dados de ${municipio[1]}/${municipio[2]} atualizados em ${quando}.`, 'sucesso');
+      } else if (dados.erro) {
+        mostrarMensagem(`Configuração salva, mas a coleta falhou: ${dados.erro}. Tente novamente em instantes.`, 'aviso');
+      } else {
+        mostrarMensagem('Configuração salva. A coleta será feita na próxima atualização.', 'aviso');
+      }
+      avisoColeta.textContent = 'Recarregue a TV para aplicar o novo logo e município.';
+    } catch (erro) {
+      mostrarMensagem(erro.message || 'Não foi possível salvar a configuração.', 'erro');
+      avisoColeta.textContent = '';
+    } finally {
+      estado.salvando = false;
+      btnSalvar.disabled = false;
+      btnSalvar.querySelector('svg')?.classList.remove('girando');
+    }
+  }
+
+  campo.addEventListener('input', () => {
+    const m = municipioDaEntrada();
+    atualizarSelecionado();
+    if (m) esconderMensagem();
+  });
+  campo.addEventListener('change', atualizarSelecionado);
+
+  btnEscolher.addEventListener('click', () => arquivo.click());
+  arquivo.addEventListener('change', () => {
+    lerArquivo(arquivo.files && arquivo.files[0]);
+    arquivo.value = '';
+  });
+  btnRemover.addEventListener('click', () => {
+    estado.logoData = null;
+    estado.removerLogo = true;
+    mostrarLogo(null);
+    btnRemover.disabled = true;
+    mostrarMensagem('O logo será removido ao salvar. Clique em “Salvar e atualizar dados”.', 'info');
+  });
+
+  form.addEventListener('submit', salvar);
+
+  carregar();
+})();
+</script>
+</body>
+</html>

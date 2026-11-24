@@ -405,7 +405,38 @@ A resposta traz a série anual; o painel seleciona o item cujo `year` é o ano a
 
 ---
 
-## 14. Limitações conhecidas (e por que existem)
+## 14. Tela 11 — Rede assistencial
+
+Arquivo: `assets/app.js` → `telaRede()`.
+
+Endpoint oficial:
+
+```text
+POST https://paineis.conasems.org.br/assets/ajax/rede_assistencial_dados.php?option=resumo_completo
+Corpo: ibge=410240&tipo=cit
+```
+
+Página oficial: <https://paineis.conasems.org.br/rede/410240/BANDEIRANTES/cit>
+
+| Bloco / cartão | Campo de origem | Detalhamento |
+| --- | --- | --- |
+| Estabelecimentos | `estabelecimentos.total` | total de estabelecimentos cadastrados no CNES na competência |
+| Convênio com o SUS | `estabelecimentos.convenio_sus` | `SIM` / `NÃO`; percentual `SIM ÷ total` na barra de progresso |
+| Leitos hospitalares | `leitos.total`, `leitos.sus` | total e quantidade no SUS; distribuição por tipo (top 6) |
+| Profissionais de saúde | `profissionais.total`, `profissionais.sus` | total e quantidade no SUS; distribuição por categoria (top 6) |
+| Equipamentos | `equipamentos.total_existente`, `equipamentos.total_sus` | total e quantidade no SUS; equipamentos mais comuns (top 6) |
+| Competência | `estabelecimentos.competencia` | mês de referência dos dados (ex.: 10/2026) |
+
+### 14.1 Derivações
+
+- **% com convênio SUS** = `convenio_sus.SIM` ÷ `estabelecimentos.total` × 100.
+- **% SUS de leitos / profissionais / equipamentos** = campo `sus` ÷ campo `total` × 100.
+- Quando `convenio_sus` traz apenas um lado (ex.: só `SIM`), o outro vale 0.
+- Nomes de tipo de leito, categoria profissional e equipamento vêm com prefixo numérico (ex.: `62 Monitor de Pressao Nao-Invasivo`); o painel remove o prefixo numérico na exibição.
+
+---
+
+## 15. Limitações conhecidas (e por que existem)
 
 | Situação | Motivo | Efeito no painel |
 | --- | --- | --- |
@@ -418,7 +449,7 @@ A resposta traz a série anual; o painel seleciona o item cujo `year` é o ano a
 
 ---
 
-## 15. Checklist rápido de verificação
+## 16. Checklist rápido de verificação
 
 Para cada tela, confira nesta ordem:
 

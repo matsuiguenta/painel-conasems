@@ -316,6 +316,7 @@ painel-conasems/
 - Vigilância: `vigilanciaemsaude.php` (`get_indicator_data`, `morbidadeHospitalar`,
   `get_srag_table_data`, `vigenciaCoberturaVacinal`, `nascidosVivosPaginado`) e
   `epidemiologia.php?option=Dengue`.
+- Rede assistencial: `rede_assistencial_dados.php?option=resumo_completo`.
 - Teto MAC: extraído dos cartões `saas-value` da página do painel MAC.
 
 > A produção MAC considera todos os estabelecimentos do território, inclusive os de gestão

@@ -43,11 +43,12 @@ CACHE_JS = PASTA_DADOS / "cache.js"
 URL_APS = f"{BASE}/atencao_basica/{IBGE}/{MUNICIPIO}/cit"
 URL_MAC = f"{BASE}/producao/{IBGE}/{MUNICIPIO}/cit"
 URL_VIG = f"{BASE}/vigilancia/{IBGE}/{MUNICIPIO}/cit"
+URL_REDE = f"{BASE}/rede/{IBGE}/{MUNICIPIO}/cit"
 
 
 def aplicar_config(ambiente: dict | None = None) -> dict:
     """Atualiza município e URLs a partir da configuração salva."""
-    global IBGE, MUNICIPIO, UF, URL_APS, URL_MAC, URL_VIG
+    global IBGE, MUNICIPIO, UF, URL_APS, URL_MAC, URL_VIG, URL_REDE
     ambiente = ambiente or configuracao.ambiente()
     municipio = ambiente["municipio"]
     IBGE = str(ambiente.get("codigoConasems") or municipio["ibge"])[:6]
@@ -56,6 +57,7 @@ def aplicar_config(ambiente: dict | None = None) -> dict:
     URL_APS = ambiente["urlAps"]
     URL_MAC = ambiente["urlMac"]
     URL_VIG = ambiente["urlVig"]
+    URL_REDE = ambiente["urlRede"]
     return ambiente
 
 CABECALHOS = {
@@ -828,6 +830,111 @@ def coletar_vigilancia(avisos: list[str]) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Coleta Rede Assistencial
+# ---------------------------------------------------------------------------
+
+def coletar_rede(avisos: list[str]) -> dict:
+    rede: dict = {"fonte": "Rede Assistencial / CNES", "url": URL_REDE}
+
+    try:
+        dados = json_post(
+            "rede_assistencial_dados.php?option=resumo_completo",
+            {"ibge": IBGE, "tipo": "cit"},
+            URL_REDE,
+        )
+    except Exception as erro:  # noqa: BLE001
+        avisos.append(f"Rede assistencial: {erro}")
+        return rede
+
+    if not isinstance(dados, dict):
+        avisos.append("Rede assistencial: resposta inesperada do painel.")
+        return rede
+
+    def lista(itens) -> list[dict]:
+        saida = []
+        for item in itens or []:
+            if not isinstance(item, dict):
+                continue
+            nome = str(item.get("label") or item.get("nome") or "").strip()
+            if not nome:
+                continue
+            saida.append({"nome": nome, "valor": inteiro(item.get("value"))})
+        return sorted(saida, key=lambda item: -item["valor"])
+
+    def detalhe(itens) -> list[dict]:
+        saida = []
+        for item in itens or []:
+            if not isinstance(item, dict):
+                continue
+            nome = str(item.get("label") or "").strip()
+            if not nome:
+                continue
+            saida.append(
+                {
+                    "nome": nome,
+                    "total": inteiro(item.get("total")),
+                    "sus": inteiro(item.get("sus")),
+                    "estabelecimentos": inteiro(item.get("num_estab")),
+                }
+            )
+        return sorted(saida, key=lambda item: (-item["total"], item["nome"]))
+
+    estabelecimentos = dados.get("estabelecimentos") or {}
+    leitos = dados.get("leitos") or {}
+    profissionais = dados.get("profissionais") or {}
+    equipamentos = dados.get("equipamentos") or {}
+
+    natureza = lista(estabelecimentos.get("natureza"))
+    total_estabelecimentos = inteiro(estabelecimentos.get("total")) or sum(item["valor"] for item in natureza)
+
+    convenio = {
+        str(item.get("label") or "").strip().upper(): inteiro(item.get("value"))
+        for item in estabelecimentos.get("convenio_sus") or []
+        if isinstance(item, dict)
+    }
+    convenio_sus = {
+        "sim": convenio.get("SIM", 0),
+        "nao": convenio.get("NÃO", convenio.get("NAO", 0)),
+        "total": total_estabelecimentos,
+    }
+
+    if natureza:
+        rede["estabelecimentos"] = {
+            "total": total_estabelecimentos,
+            "natureza": natureza,
+            "convenioSus": convenio_sus,
+            "tipos": lista(estabelecimentos.get("tipo_estab")),
+        }
+
+    if leitos:
+        rede["leitos"] = {
+            "total": inteiro(leitos.get("total")),
+            "sus": inteiro(leitos.get("sus")),
+            "distribuicao": detalhe(leitos.get("distribuicao")),
+        }
+
+    if profissionais:
+        rede["profissionais"] = {
+            "total": inteiro(profissionais.get("total")),
+            "sus": inteiro(profissionais.get("sus")),
+            "distribuicao": detalhe(profissionais.get("distribuicao")),
+        }
+
+    if equipamentos:
+        rede["equipamentos"] = {
+            "total": inteiro(equipamentos.get("total_existente")),
+            "sus": inteiro(equipamentos.get("total_sus")),
+            "distribuicao": detalhe(equipamentos.get("equipamentos")),
+        }
+
+    competencia = mes_ano(estabelecimentos.get("competencia", ""))
+    if not competencia:
+        competencia = str(leitos.get("competencia") or profissionais.get("competencia") or "")
+    rede["competencia"] = competencia
+    return rede
+
+
+# ---------------------------------------------------------------------------
 # Persistência
 # ---------------------------------------------------------------------------
 
@@ -1113,6 +1220,7 @@ def coletar() -> dict:
     aps = coletar_aps(avisos)
     mac = coletar_mac(avisos)
     vigilancia = coletar_vigilancia(avisos)
+    rede = coletar_rede(avisos)
 
     if not (aps.get("cobertura") or mac.get("sia")):
         raise RuntimeError("Nenhum dado essencial foi obtido dos painéis.")
@@ -1120,7 +1228,12 @@ def coletar() -> dict:
     payload = {
         "municipio": ambiente["municipio"],
         "fonte": "Painéis CONASEMS",
-        "urls": {"aps": ambiente["urlAps"], "mac": ambiente["urlMac"], "vigilancia": ambiente["urlVig"]},
+        "urls": {
+            "aps": ambiente["urlAps"],
+            "mac": ambiente["urlMac"],
+            "vigilancia": ambiente["urlVig"],
+            "rede": ambiente["urlRede"],
+        },
         "iniciadoEm": iniciado.isoformat(),
         "geradoEm": datetime.now(fuso_local()).isoformat(),
         "status": "parcial" if avisos else "ok",
@@ -1129,6 +1242,7 @@ def coletar() -> dict:
         "aps": aps,
         "mac": mac,
         "vigilancia": vigilancia,
+        "rede": rede,
     }
     return payload
 

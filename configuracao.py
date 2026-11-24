@@ -49,6 +49,7 @@ SLIDES = [
     {"id": "sia-sih", "titulo": "Produção ambulatorial e hospitalar"},
     {"id": "onco-mental", "titulo": "Oncologia e saúde mental"},
     {"id": "vigilancia", "titulo": "Vigilância em saúde"},
+    {"id": "rede", "titulo": "Rede assistencial"},
 ]
 
 EXTENSOES_LOGO = {
@@ -268,6 +269,7 @@ def ambiente(cfg: dict | None = None) -> dict:
         "urlAps": f"{BASE_CONASEMS}/atencao_basica/{codigo}/{slug}/cit",
         "urlMac": f"{BASE_CONASEMS}/producao/{codigo}/{slug}/cit",
         "urlVig": f"{BASE_CONASEMS}/vigilancia/{codigo}/{slug}/cit",
+        "urlRede": f"{BASE_CONASEMS}/rede/{codigo}/{slug}/cit",
     }
 
 

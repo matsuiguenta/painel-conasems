@@ -809,15 +809,13 @@
 
     const anoAtual = new Date().getFullYear();
     const porAno = (lista) => [...(lista || [])].sort((a, b) => Number(a.ano) - Number(b.ano));
-    const fechado = (lista) => {
-      const serie = porAno(lista);
-      const anteriores = serie.filter((x) => Number(x.ano) < anoAtual);
-      return (anteriores.length ? anteriores : serie).at(-1) || null;
-    };
-    const anteriorA = (lista, alvo) => {
-      if (!alvo) return null;
-      const serie = porAno(lista).filter((x) => Number(x.ano) < Number(alvo.ano));
-      return serie.at(-1) || null;
+    // Como no Painel CONASEMS, mostra o último ano disponível — inclusive o ano
+    // em curso (parcial) — e não apenas os anos já fechados.
+    const ultimo = (lista) => porAno(lista).at(-1) || null;
+    const parcial = (item) => Number(item && item.ano) === anoAtual;
+    const periodo = (item) => {
+      if (!item) return '—';
+      return parcial(item) ? `Acumulado parcial (${item.ano})` : `${item.ano}`;
     };
     const variacao = (atual, base) => {
       const b = Number(base) || 0;
@@ -825,18 +823,28 @@
       const pct = ((Number(atual) - b) / b) * 100;
       return `${pct > 0 ? '+' : ''}${nf1.format(pct)}%`;
     };
-    const comparativo = (atual, ant, campo = 'obitos') => (ant
-      ? `${ic('tendencia')} ${ant.ano}: ${fmt(ant[campo], campo === 'valor' ? 'dec' : 'int', 1)} · ${variacao(atual, ant[campo])}`
-      : '');
+    // Com o ano em curso, o CONASEMS compara os dois últimos anos fechados.
+    const comparativo = (lista, campo = 'obitos') => {
+      const serie = porAno(lista);
+      if (!serie.length) return '';
+      const recente = serie.at(-1);
+      if (parcial(recente)) {
+        const fechados = serie.filter((x) => Number(x.ano) < anoAtual);
+        if (fechados.length < 2) return '';
+        const a = fechados.at(-1);
+        const b = fechados.at(-2);
+        return `${ic('tendencia')} ${b.ano}: ${fmt(b[campo], campo === 'valor' ? 'dec' : 'int', 1)} · ${variacao(a[campo], b[campo])}`;
+      }
+      if (serie.length < 2) return '';
+      const anterior = serie.at(-2);
+      return `${ic('tendencia')} ${anterior.ano}: ${fmt(anterior[campo], campo === 'valor' ? 'dec' : 'int', 1)} · ${variacao(recente[campo], anterior[campo])}`;
+    };
 
-    const geral = fechado(mort.geral);
-    const geralAnt = anteriorA(mort.geral, geral);
-    const infantil = fechado(mort.infantil);
-    const infantilAnt = anteriorA(mort.infantil, infantil);
-    const tb = fechado(v.tuberculose);
-    const tbAnt = anteriorA(v.tuberculose, tb);
-    const dengue = porAno(v.dengue).at(-1);
-    const dengueAnt = anteriorA(v.dengue, dengue);
+    const geral = ultimo(mort.geral);
+    const infantil = ultimo(mort.infantil);
+    const tb = ultimo(v.tuberculose);
+    const dengue = ultimo(v.dengue);
+    const han = ultimo(v.hanseniase);
 
     const internacoes = v.internacoes || {};
     const capitulos = internacoes.capitulos || [];
@@ -859,31 +867,31 @@
       <div class="slide-corpo" style="grid-template-rows:auto minmax(0,1fr) auto">
         <div class="grade-4 animar" style="--i:1">
           ${cartao({
-            rotulo: `Mortalidade geral — ${geral?.ano || '—'}`,
+            rotulo: `Mortalidade geral — ${periodo(geral)}`,
             valor: contador(geral?.obitos ?? 0),
             unidade: 'óbitos',
-            meta: comparativo(geral?.obitos ?? 0, geralAnt),
+            meta: comparativo(mort.geral, 'obitos'),
             icone: 'coracao', destaque: 'destaque-azul', indice: 0,
           })}
           ${cartao({
-            rotulo: `Mortalidade infantil — ${infantil?.ano || '—'}`,
+            rotulo: `Mortalidade infantil — ${periodo(infantil)}`,
             valor: contador(infantil?.obitos ?? 0),
             unidade: 'óbitos',
-            meta: comparativo(infantil?.obitos ?? 0, infantilAnt),
+            meta: comparativo(mort.infantil, 'obitos'),
             icone: 'bebe', destaque: 'destaque-verde', indice: 1,
           })}
           ${cartao({
-            rotulo: `Tuberculose — ${tb?.ano || '—'}`,
+            rotulo: `Tuberculose — ${periodo(tb)}`,
             valor: contador(tb?.valor ?? 0, 'dec', 1),
             unidade: '/100 mil',
-            meta: comparativo(tb?.valor ?? 0, tbAnt, 'valor'),
+            meta: comparativo(v.tuberculose, 'valor'),
             icone: 'pulmao', destaque: 'destaque-vermelho', indice: 2,
           })}
           ${cartao({
-            rotulo: `Dengue — ${dengue?.ano || '—'}`,
+            rotulo: `Dengue — ${periodo(dengue)}`,
             valor: contador(dengue?.casos ?? 0),
             unidade: 'casos',
-            meta: dengueAnt ? `${ic('tendencia')} ${dengueAnt.ano}: ${fmt(dengueAnt.casos)} casos · ${variacao(dengue.casos, dengueAnt.casos)}` : '',
+            meta: comparativo(v.dengue, 'casos'),
             icone: 'virus', destaque: 'destaque-amarelo', indice: 3,
           })}
         </div>
@@ -892,7 +900,7 @@
           <article class="cartao cartao-cheio destaque-verde">
             <div class="cartao-topo">
               <div class="cartao-icone verde">${ic('hospital')}</div>
-              <div class="cartao-rotulo">Internações por capítulo CID-10 · ${esc(internacoes.ano || '—')}</div>
+              <div class="cartao-rotulo">Internações por capítulo CID-10 · ${periodo(internacoes)}</div>
               <span class="pilula" style="margin-left:auto">${ic('banco')} ${fmt(internacoes.total ?? 0)} no ano</span>
             </div>
             ${topCapitulos.length
@@ -901,13 +909,13 @@
                 { formato: (x) => fmt(x), cor: '#10b981', classe: 'compacto' },
               )
               : '<div class="sem-dados">Sem dados de internações</div>'}
-            <div class="nota" style="margin-top:auto">${ic('banco')} SIH/DATASUS · local de internação · ${esc(internacoes.ano || '—')} (ano em curso).</div>
+            <div class="nota" style="margin-top:auto">${ic('banco')} SIH/DATASUS · local de internação · ${esc(internacoes.ano || '—')} (acumulado parcial).</div>
           </article>
 
           <article class="cartao cartao-cheio destaque-roxo">
             <div class="cartao-topo">
               <div class="cartao-icone roxo">${ic('escudo')}</div>
-              <div class="cartao-rotulo">Cobertura vacinal · ${esc(vacinacao.ano || '—')}</div>
+              <div class="cartao-rotulo">Cobertura vacinal · ${periodo(vacinacao)}</div>
               <span class="pilula ${mediaVacinal >= 95 ? 'verde' : 'amarela'}" style="margin-left:auto">${ic('alvo')} meta ${nf0.format(vacinacao.meta || 95)}%</span>
             </div>
             ${vacinas.length
@@ -922,7 +930,7 @@
 
         <div class="grade-4 animar" style="--i:3">
           ${cartao({
-            rotulo: 'SRAG',
+            rotulo: `SRAG — ${periodo(srag)}`,
             valor: contador(srag.total ?? 0),
             unidade: `casos · ${srag.ano || '—'}`,
             meta: `${ic('atividade')} ${nf1.format(srag.incidencia || 0)} casos por 100 mil hab.`,
@@ -936,10 +944,10 @@
             icone: 'pessoas', destaque: 'destaque-azul', indice: 1,
           })}
           ${cartao({
-            rotulo: `Hanseníase — ${fechado(v.hanseniase)?.ano || '—'}`,
-            valor: contador(fechado(v.hanseniase)?.valor ?? 0, 'dec', 1),
+            rotulo: `Hanseníase — ${periodo(han)}`,
+            valor: contador(han?.valor ?? 0, 'dec', 1),
             unidade: '/100 mil',
-            meta: `${ic('escudo')} ${fechado(v.hanseniase)?.valor ? 'Coeficiente de detecção' : 'Sem casos no período'}`,
+            meta: `${ic('escudo')} ${han?.valor ? 'Coeficiente de detecção' : 'Sem casos no período'}`,
             icone: 'escudo', destaque: 'destaque-amarelo', indice: 2,
           })}
           ${cartao({

@@ -322,6 +322,13 @@ painel-conasems/
 > estadual. Por isso o valor produzido pode ser maior que o teto municipal — o painel
 > explica essa diferença na tela 7.
 
+### Origem de cada informação
+
+O documento [`ORIGEM_DADOS.md`](ORIGEM_DADOS.md) lista, tela por tela e cartão por cartão,
+o endpoint oficial, o campo de origem e a regra de período usada — inclusive a regra de
+`Acumulado parcial (AAAA)` da Vigilância. Use-o para conferência humana contra os Painéis
+CONASEMS.
+
 ---
 
 ## Segurança

@@ -961,6 +961,147 @@
       </div>`;
   }
 
+  /* --------------------------------------------------------------- rede */
+
+  function telaRede() {
+    const rede = dados.rede || {};
+    if (!rede.estabelecimentos) return semDados('rede assistencial');
+
+    const compet = rede.competencia || '—';
+    const est = rede.estabelecimentos;
+    const conv = est.convenioSus || { sim: 0, nao: 0, total: est.total };
+    const leitos = rede.leitos || {};
+    const prof = rede.profissionais || {};
+    const equip = rede.equipamentos || {};
+
+    const pctSUS = (sus, total) => (total ? ((sus || 0) / total) * 100 : 0);
+    const nomeCurto = (texto) => String(texto || '').replace(/^\d+\s*/, '');
+
+    return `
+      ${cabecalho(
+        'Rede assistencial',
+        'Estabelecimentos, leitos, profissionais e equipamentos de saúde cadastrados no CNES.',
+        'REDE · CNES',
+        `CNES · ${esc(compet)}`
+      )}
+      <div class="slide-corpo">
+        <div class="grade-5 animar" style="--i:1">
+          ${cartao({
+            rotulo: 'Estabelecimentos',
+            valor: contador(est.total),
+            unidade: 'cadastrados',
+            meta: `${ic('relogio')} Competência ${esc(compet)}`,
+            rodape: `<span>CNES · ${fmt(est.total)} estabelecimentos no município</span>`,
+            icone: 'hospital', destaque: 'destaque-azul', indice: 0,
+          })}
+          ${cartao({
+            rotulo: 'Convênio com o SUS',
+            valor: contador(conv.sim),
+            unidade: `de ${fmt(conv.total)} estabelecimentos`,
+            meta: `${ic('relogio')} ${nf1.format(pctSUS(conv.sim, conv.total))}% da rede`,
+            barra: barraProgresso(pctSUS(conv.sim, conv.total), '#0559bf', 'Estabelecimentos com convênio SUS'),
+            icone: 'check', destaque: 'destaque-verde', indice: 1,
+          })}
+          ${cartao({
+            rotulo: 'Leitos hospitalares',
+            valor: contador(leitos.total),
+            unidade: 'leitos',
+            meta: `${ic('hospital')} ${fmt(leitos.sus)} no SUS · ${nf1.format(pctSUS(leitos.sus, leitos.total))}% do total`,
+            barra: barraProgresso(pctSUS(leitos.sus, leitos.total), '#10b981', 'Leitos do SUS'),
+            icone: 'hospital', destaque: 'destaque-vermelho', indice: 2,
+          })}
+          ${cartao({
+            rotulo: 'Profissionais de saúde',
+            valor: contador(prof.total),
+            unidade: 'profissionais',
+            meta: `${ic('pessoas')} ${fmt(prof.sus)} no SUS · ${nf1.format(pctSUS(prof.sus, prof.total))}% do total`,
+            barra: barraProgresso(pctSUS(prof.sus, prof.total), '#f59e0b', 'Profissionais do SUS'),
+            icone: 'pessoas', destaque: 'destaque-amarelo', indice: 3,
+          })}
+          ${cartao({
+            rotulo: 'Equipamentos',
+            valor: contador(equip.total),
+            unidade: 'equipamentos',
+            meta: `${ic('atividade')} ${fmt(equip.sus)} no SUS · ${nf1.format(pctSUS(equip.sus, equip.total))}% do total`,
+            barra: barraProgresso(pctSUS(equip.sus, equip.total), '#7c3aed', 'Equipamentos do SUS'),
+            icone: 'atividade', destaque: 'destaque-roxo', indice: 4,
+          })}
+        </div>
+
+        <div class="grade-2 animar" style="--i:2">
+          <article class="cartao cartao-cheio destaque-azul animar" style="--i:1">
+            <div class="cartao-topo">
+              <div class="cartao-icone azul">${ic('escudo')}</div>
+              <div class="cartao-rotulo">Estabelecimentos por natureza jurídica</div>
+            </div>
+            ${est.natureza?.length
+              ? barrasHorizontais(
+                est.natureza.map((item) => ({ nome: nomeCurto(item.nome), valor: item.valor })),
+                { cor: '#0559bf', maximo: est.total || 1, classe: 'compacto' }
+              )
+              : '<div class="sem-dados">Sem dados de natureza jurídica</div>'}
+            <div class="nota" style="margin-top:auto">${ic('grafico')} ${fmt(est.total)} estabelecimentos cadastrados no CNES.</div>
+          </article>
+
+          <article class="cartao cartao-cheio destaque-vermelho animar" style="--i:2">
+            <div class="cartao-topo">
+              <div class="cartao-icone vermelho">${ic('cama')}</div>
+              <div class="cartao-rotulo">Leitos por tipo de internação</div>
+            </div>
+            ${leitos.distribuicao?.length
+              ? barrasHorizontais(
+                leitos.distribuicao.slice(0, 6).map((item) => ({
+                  nome: nomeCurto(item.nome),
+                  valor: item.total,
+                  cor: '#ef4444',
+                })),
+                { maximo: leitos.total || 1, classe: 'compacto' }
+              )
+              : '<div class="sem-dados">Sem dados de leitos</div>'}
+            <div class="nota" style="margin-top:auto">${ic('grafico')} ${fmt(leitos.total)} leitos no total, ${fmt(leitos.sus)} no SUS.</div>
+          </article>
+        </div>
+
+        <div class="grade-2 animar" style="--i:3">
+          <article class="cartao cartao-cheio destaque-amarelo animar" style="--i:1">
+            <div class="cartao-topo">
+              <div class="cartao-icone amarelo">${ic('pessoas')}</div>
+              <div class="cartao-rotulo">Profissionais por categoria</div>
+            </div>
+            ${prof.distribuicao?.length
+              ? barrasHorizontais(
+                prof.distribuicao.slice(0, 6).map((item) => ({
+                  nome: nomeCurto(item.nome),
+                  valor: item.total,
+                  cor: '#f59e0b',
+                })),
+                { maximo: prof.total || 1, classe: 'compacto' }
+              )
+              : '<div class="sem-dados">Sem dados de profissionais</div>'}
+            <div class="nota" style="margin-top:auto">${ic('grafico')} ${fmt(prof.total)} profissionais, ${fmt(prof.sus)} no SUS.</div>
+          </article>
+
+          <article class="cartao cartao-cheio destaque-roxo animar" style="--i:2">
+            <div class="cartao-topo">
+              <div class="cartao-icone roxo">${ic('atividade')}</div>
+              <div class="cartao-rotulo">Equipamentos mais comuns</div>
+            </div>
+            ${equip.distribuicao?.length
+              ? barrasHorizontais(
+                equip.distribuicao.slice(0, 6).map((item) => ({
+                  nome: nomeCurto(item.nome),
+                  valor: item.total,
+                  cor: '#7c3aed',
+                })),
+                { maximo: equip.total || 1, classe: 'compacto' }
+              )
+              : '<div class="sem-dados">Sem dados de equipamentos</div>'}
+            <div class="nota" style="margin-top:auto">${ic('grafico')} ${fmt(equip.total)} equipamentos, ${fmt(equip.sus)} no SUS.</div>
+          </article>
+        </div>
+      </div>`;
+  }
+
   /* --------------------------------------------------------------- montagem */
 
   function montarTelas() {
@@ -975,6 +1116,7 @@
       { id: 'sia-sih', titulo: 'Produção ambulatorial e hospitalar', montar: telaSiaSih },
       { id: 'onco-mental', titulo: 'Oncologia e saúde mental', montar: telaOncologiaMental },
       { id: 'vigilancia', titulo: 'Vigilância em saúde', montar: telaVigilancia },
+      { id: 'rede', titulo: 'Rede assistencial', montar: telaRede },
     ];
     const definicoes = ordenarDefinicoes(todas);
     assinaturaTelas = assinaturaSlides();
